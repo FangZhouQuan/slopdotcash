@@ -5,6 +5,7 @@ import type { ReviewEnv } from "./review";
 import { readValueDecision } from "./value-consumption";
 import { collectValueEvidence, findRepository } from "./value-evidence";
 import { collectValueGroup } from "./value-group-collection";
+import { reopenDueSharedCommitAssessments } from "./value-group-reopen";
 import { noChangePromotionDeferralOnly } from "./value-no-change-promotion";
 import {
   claimValueRequest,
@@ -363,6 +364,9 @@ export async function consumePendingValueRequests(env: ValueConsumerEnv) {
   await resumeParkedValueRequests(env.SLOPBOT_DB, (repository) =>
     registeredRepository(env.SLOPBOT_DB, repository),
   );
+  // A corrected shared-commit group reclaims its original delivery before
+  // this run reads the queue, so the joint assessment uses the same request.
+  await reopenDueSharedCommitAssessments(env);
   const outcomes: string[] = [];
   while (outcomes.length < RUN_REQUESTS && Date.now() - started < RUN_MS) {
     const job = await nextValueRequest(env.SLOPBOT_DB);
